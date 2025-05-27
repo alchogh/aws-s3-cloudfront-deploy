@@ -31,6 +31,35 @@ Next.js 애플리케이션을 AWS S3와 CloudFront를 이용하여 배포한 프
 사용자 요청 → CloudFront CDN → S3 버킷(정적 파일)
 ```
 
+## 왜 CloudFront를 함께 사용해야 할까?
+
+<img width="1682" height="50" alt="스크린샷 2025-05-27 오후 2 55 44" src="https://github.com/user-attachments/assets/468f3822-21da-4c66-b2f6-31712c918f61" />   
+
+
+
+위 이미지는 동일한 리소스를 각각 S3 단독 배포와 CloudFront + S3를 통해 요청한 스크린 샷이다.
+CloudFront를 사용하는 경우 응답 시간이 약 28ms, S3 단독 요청은 약 313ms, 약 7배 차이가 난 것을 알 수 있다. 
+
+이러한 차이는 CloudFront가 **글로벌 CDN(Content Delivery Network)** 역할을 하기 때문이다.
+CloudFront는 전 세계 여러 지역에 위치한 **엣지 로케이션(Edge Location)** 을 통해 사용자와 가까운 서버에서 콘텐츠를 제공하므로,  
+매번 AWS S3의 원본 버킷까지 네트워크 요청을 전달할 필요가 없다.
+
+>CloudFront를 통해 정적 리소스를 로딩할 경우,
+>브라우저는 이전에 수신한 리소스에 대해 `ETAG` 또는 `Last-Modified`값을 포함한 조건부 요청을 전송한다.
+>이 요청을 기반으로 캐시된 리소스와 비교한 후, 변경 사항이 없으면 304응답을 반환한다.
+
+### 왜 CloudFront로 배포된 네트워크를 보면 응답헤더에 `Content-Encoding`가 보이지 않을까?
+
+<img width="720" alt="스크린샷 2025-05-27 오후 3 18 31" src="https://github.com/user-attachments/assets/64ce6fc8-5987-4249-9eee-059b3d1d3f4c" />
+
+앞서 말한대로 304는 캐시된 리소스가 여전히 유효하다는 뜻이다. 그래서 status code가 304가 뜨면 실제 바디가 전달되지 않고, 헤더도 일부 생략되기 때문에 `Content-Encoding` 도 생략될 수 있다.
+
+그래서 캐시 사용중지를 누르고 확인을 하면 Content-Encoding이 정상 출력되면서 압축이 된 것을 알 수 있다.
+
+<img width="824" alt="스크린샷 2025-05-27 오후 3 54 14" src="https://github.com/user-attachments/assets/adb11fc5-4ec4-4d2c-ba02-aa5abecebadd" />
+
+
+
 ## 로컬 개발 환경 설정
 
 ```bash
@@ -57,18 +86,7 @@ pnpm build
    - 빌드된 파일을 S3 버킷에 업로드
    - CloudFront 캐시 무효화
 
-## 수동 배포 방법
 
-수동으로 배포하려면 다음 명령어를 사용합니다:
-
-```bash
-# 빌드
-pnpm build
-
-# AWS CLI가 설치되어 있고 자격 증명이 구성되어 있어야 합니다
-aws s3 sync out/ s3://[버킷이름] --delete
-aws cloudfront create-invalidation --distribution-id [배포ID] --paths "/*"
-```
 
 ## AWS 리소스 설정
 
