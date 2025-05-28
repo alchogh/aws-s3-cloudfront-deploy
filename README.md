@@ -24,7 +24,9 @@ Next.js 애플리케이션을 AWS S3와 CloudFront를 이용하여 배포한 프
 
 ## 배포 아키텍처
 
-![](https://velog.velcdn.com/images/alchogh/post/7d8f5b9d-d1f1-43e8-9e44-edd67b447b44/image.png)
+![image](https://github.com/user-attachments/assets/50a3f0f5-83f5-4194-a1f4-a2abbf4b3d25)
+
+
 
 ## 왜 CloudFront를 함께 사용해야 할까?
 
